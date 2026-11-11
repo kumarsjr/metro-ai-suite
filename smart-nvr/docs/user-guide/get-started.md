@@ -47,7 +47,7 @@ Set up the required environment variables:
 ```bash
 # Docker Registry Details
 export REGISTRY_URL="intel"
-export TAG="latest"
+export TAG="2026.3.0-rc1"
 
 # VSS Service Endpoint (required)
 export VSS_IP=<vss-device-ip>

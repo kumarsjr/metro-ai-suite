@@ -9,6 +9,9 @@
 
 **Release Date**: November, 2026
 
+> [!NOTE]
+> Helm Chart support will be deprecated in the next release. Limited validation has been performed on the Helm charts for this release.
+
 **New**:
 
 - Scenescape region events: subscribe to region topics alongside camera topics. Brokers now take `camera_topic` and `region_topic`.
@@ -28,10 +31,6 @@
 **Fixed**:
 
 - Updated Gradio and dependency minimums to address reported vulnerabilities.
-
-**Deprecated**:
-
-- Helm chart deployment is deprecated starting with this release. Use Docker Compose for new deployments and plan to migrate existing Helm deployments to Docker Compose.
 
 **Known Issues**:
 

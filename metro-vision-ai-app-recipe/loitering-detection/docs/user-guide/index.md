@@ -18,7 +18,7 @@ hide_directive-->
 > [!NOTE]
 > This is a sample application **intended for evaluation and development purposes only**.
 > For more information, refer to
-> [Intended Use](https://docs.openedgeplatform.intel.com/dev/OEP-articles/notes-on-usage.html#intended-use)
+> [Intended Use](https://docs.openedgeplatform.intel.com/2026.3/OEP-articles/notes-on-usage.html#intended-use)
 
 <!--hide_directive :::: hide_directive-->
 
@@ -41,6 +41,8 @@ extend its functionalities to meet their specific needs.
   real-time monitoring, and insightful data visualization.
 - **User-Friendly:** Simplifies configuration and operation through prebuilt scripts and
   configuration files.
+- **Optional Console UI:** a single page to manage and compare different models simultanously.
+  For details, see how to [Use the Console UI](./how-to-guides/use-console-ui.md).
 
 ## How it works
 
@@ -57,6 +59,7 @@ The architecture is designed to facilitate seamless integration and operation of
 - **Grafana Dashboard:** A monitoring and visualization tool for analyzing pipeline metrics, logs, and other performance data.
 - **Inputs (Video Files and Cameras):** Provide raw video streams or files as input data for processing in the pipeline.
 - **Nginx:** High-performance web server and reverse proxy that provides TLS termination and unified HTTPS access.
+- **Console UI (optional):** Provides a convenient interface for managing the pipelines and viewing results.
 
 The DL Streamer Pipeline Server is a core component, designed to handle video analytics at the
 edge. It leverages pre-trained deep learning models to perform tasks such as object detection,

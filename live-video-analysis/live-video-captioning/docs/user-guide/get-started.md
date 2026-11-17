@@ -21,7 +21,7 @@ for more details.
 
 Go to the target directory of your choice and clone the suite.
 If you want to clone a specific release branch, replace `main` with the desired tag.
-To learn more on partial cloning, check the [Repository Cloning guide](https://docs.openedgeplatform.intel.com/dev/OEP-articles/contribution-guide.html#repository-cloning-partial-cloning).
+To learn more on partial cloning, check the [Repository Cloning guide](https://docs.openedgeplatform.intel.com/2026.3/OEP-articles/contribution-guide.html#repository-cloning-partial-cloning).
 
 ```bash
 git clone --filter=blob:none --sparse --branch release-2026.3.0 https://github.com/open-edge-platform/metro-ai-suite.git
@@ -49,7 +49,7 @@ bash scripts/setup_env.sh --force
 This script sets these important values:
 
 | Variable | Default | Purpose |
-|----------|---------|--------|
+| -------- | ------- | ------ |
 | `HOST_IP` | *(auto-detected)* | Host address advertised to browsers on other machines for WebRTC media. Not needed when the browser runs on the same host. |
 | `REGISTRY` | `intel/` | Image registry prefix. |
 | `TAG` | `2026.3.0-rc1` | Docker image tag. |
@@ -167,6 +167,7 @@ http://localhost:4173
 
 From another machine on the network, use `http://<HOST_IP>:4173` instead.
 
+> [!NOTE]
 > **Offline / air-gapped use:** after the images, models, and videos are downloaded, the application runs without Internet or LAN access. Open `http://localhost:4173` on the host itself; no network configuration is required.
 
 Then:

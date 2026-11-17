@@ -1,8 +1,10 @@
+<!--hide_directive
 ```{eval-rst}
 .. meta::
    :description: Build the Virtual Security Guard Agent container image from source.
    :keywords: Virtual Security Guard Agent, VSG, build, source, Docker, GNU Make
 ```
+hide_directive-->
 
 <!--
 SPDX-FileCopyrightText: (C) 2026 Intel Corporation
@@ -22,22 +24,23 @@ directory. `make help` lists the available targets.
 ## Build the Image
 
 `make build` builds `${REGISTRY}intel/vsg-ui:${TAG}` (default
-`intel/vsg-ui:latest`) and passes your shell's proxy variables through.
+`intel/vsg-ui:2026.3.0-rc1`) and passes your shell's proxy variables through.
 
 ```bash
 make build
 make up                      # uses the local image
 
 # Custom registry and tag: pass the same values to each target
-make build REGISTRY=registry.example.com/ TAG=2026.3.0
-make push  REGISTRY=registry.example.com/ TAG=2026.3.0
-make up    REGISTRY=registry.example.com/ TAG=2026.3.0
+make build REGISTRY=registry.example.com/ TAG=2026.3.0-rc1
+make push  REGISTRY=registry.example.com/ TAG=2026.3.0-rc1
+make up    REGISTRY=registry.example.com/ TAG=2026.3.0-rc1
 ```
 
 `make up` uses a local image before pulling one, so run `make build` after
-code changes.
+code changes. `make push` builds before pushing.
 
-`REGISTRY` needs a trailing slash. `make push` builds before pushing.
+> [!IMPORTANT]
+> `REGISTRY` needs a trailing slash.
 
 For the `lint`, `test`, `check`, and `format` targets, see
 [Run Unit Tests](./run-unit-tests.md).

@@ -29,9 +29,13 @@
 
 - Updated Gradio and dependency minimums to address reported vulnerabilities.
 
+**Deprecated**:
+
+- Helm chart deployment is deprecated starting with this release. Use Docker Compose for new deployments and plan to migrate existing Helm deployments to Docker Compose.
+
 **Known Issues**:
 
-- Scenescape integration is currently not supported when deploying with Helm charts.
+- Scenescape integration is not supported when deploying with Helm charts.
 
 ## Version 2026.2.0
 

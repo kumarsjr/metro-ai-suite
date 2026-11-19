@@ -41,6 +41,8 @@ constraint-dependencies = [
     "pillow>=12.3.0",
     "brotli>=1.2.1",
     "certifi>=2026.10.19",
+    "filelock>=4.2.1",
+    "urllib3>=2.8.0",
 ]
 
 [tool.pytest.ini_options]

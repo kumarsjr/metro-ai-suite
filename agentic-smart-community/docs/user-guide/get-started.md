@@ -2,7 +2,7 @@
 
 **Agentic Smart Community** is an AI Agent-native video analysis platform built around the Model Context Protocol (MCP). This guide installs the MCP server and its dependent services, then connects an agent host. You can then register a custom use case to tailor the video-analysis workflow to your camera-monitoring requirements.
 
-For the validated use cases, e.g., Fridge Monitor, Child Safety, and Elder Wakeup reference demo, including user-provided video setup, see [Ready-to-Run Demo](./get-started/ready-to-run-demo.md).
+For a ready-to-run demo with an open-source video, see [Ready-to-Run Demo](./get-started/ready-to-run-demo.md).
 
 ## Prerequisites
 

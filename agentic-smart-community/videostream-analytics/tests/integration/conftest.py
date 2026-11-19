@@ -7,7 +7,7 @@ import pytest
 
 ANALYTICS_URL = "http://localhost:8999"
 WEBHOOK_URL = "http://localhost:9999"
-RTSP_URL = "rtsp://localhost:8554/live/child"
+RTSP_URL = "rtsp://localhost:8554/live/sample"
 
 
 @pytest.fixture(scope="session")

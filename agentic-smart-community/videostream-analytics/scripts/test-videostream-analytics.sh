@@ -5,13 +5,13 @@
 # Supports three test modes:
 #   1. Unit Tests        — pure Python, using video fixtures generated at test time
 #   2. Integration Tests — Docker container + MediaMTX + RTSP push + mock webhook
-#   3. Multi-Video Tests — runs the 4 video scenarios one by one, verifying clip output
+#   3. Scenario Tests    — runs the sample video with the prefilter on and off, verifying clip output
 #
 # Usage:
 #   bash scripts/test-videostream-analytics.sh              # run all tests
 #   bash scripts/test-videostream-analytics.sh --unit-only  # unit tests only
 #   bash scripts/test-videostream-analytics.sh --integration-only  # integration tests only
-#   bash scripts/test-videostream-analytics.sh --multi-video       # multi-video scenario tests
+#   bash scripts/test-videostream-analytics.sh --multi-video       # scenario tests (prefilter on / off)
 #   bash scripts/test-videostream-analytics.sh --local             # local (no Docker) integration tests
 #   bash scripts/test-videostream-analytics.sh -v           # verbose output
 #
@@ -19,10 +19,7 @@
 #   HTTP_PROXY / HTTPS_PROXY  — Docker build proxy
 #   PREFILTER_MODEL_DIR       — YOLO model directory (default ~/models/openvino)
 #   DATA_DIR                  — clip output directory (default /tmp/smart-community-clips)
-#   VSA_TEST_CHILD_VIDEO      — child scenario integration test video
-#   VSA_TEST_FRIDGE_VIDEO     — fridge multi-video test video
-#   VSA_TEST_ELDER_VIDEO      — elder multi-video test video
-#   VSA_TEST_ELDER_2_VIDEO    — second elder multi-video test video
+#   VSA_TEST_VIDEO            — use your own MP4 instead of the downloaded people-detection sample
 #   MEDIAMTX_BIN              — MediaMTX executable (default ~/.local/bin/mediamtx)
 #   MEDIAMTX_CONFIG           — MediaMTX config (default tools/mediamtx.yml)
 #   DOCKER_IMAGE              — VSA container image name (default videostream-analytics:latest)
@@ -50,11 +47,9 @@ ANALYTICS_PORT=8999
 DATA_DIR="${DATA_DIR:-/tmp/smart-community-clips}"
 PREFILTER_MODEL_DIR="${PREFILTER_MODEL_DIR:-$HOME/models/openvino}"
 
-# --- User-provided integration and evaluation videos ---
-VIDEO_CHILD="${VSA_TEST_CHILD_VIDEO:-}"
-VIDEO_FRIDGE="${VSA_TEST_FRIDGE_VIDEO:-}"
-VIDEO_ELDER_DAY1="${VSA_TEST_ELDER_VIDEO:-}"
-VIDEO_ELDER_DAY2="${VSA_TEST_ELDER_2_VIDEO:-}"
+# --- Test video: open-source people-detection sample, downloaded when missing ---
+SAMPLE_URL="https://raw.githubusercontent.com/intel-iot-devkit/sample-videos/master/people-detection.mp4"
+VIDEO_SAMPLE="${VSA_TEST_VIDEO:-$PROJECT_DIR/tools/.cache/people-detection.mp4}"
 
 # --- Parse Arguments ---
 RUN_UNIT=true
@@ -89,15 +84,16 @@ warn()  { echo -e "${YELLOW}[WARN]${NC} $*"; }
 fail()  { echo -e "${RED}[FAIL]${NC} $*"; }
 header(){ echo -e "\n${CYAN}═══════════════════════════════════════════════════════════════${NC}"; echo -e "  ${CYAN}$*${NC}"; echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}\n"; }
 
-require_video() {
-    local variable_name="$1" video_path="$2"
-    if [[ -z "$video_path" ]]; then
-        fail "Set $variable_name to an absolute path for this video workflow"
-        return 1
+ensure_sample_video() {
+    if [[ -n "${VSA_TEST_VIDEO:-}" ]]; then
+        [[ -f "$VIDEO_SAMPLE" ]] || { fail "VSA_TEST_VIDEO does not exist: $VIDEO_SAMPLE"; return 1; }
+        return 0
     fi
-    if [[ ! -f "$video_path" ]]; then
-        fail "Video from $variable_name does not exist: $video_path"
-        return 1
+    if ! ffprobe -v error "$VIDEO_SAMPLE" 2>/dev/null; then
+        info "Downloading $SAMPLE_URL"
+        mkdir -p "$(dirname "$VIDEO_SAMPLE")"
+        curl -fsSL --retry 3 -o "$VIDEO_SAMPLE.part" "$SAMPLE_URL" && mv "$VIDEO_SAMPLE.part" "$VIDEO_SAMPLE" \
+            || { fail "download failed: $SAMPLE_URL"; return 1; }
     fi
 }
 
@@ -166,7 +162,7 @@ push_rtsp() {
     fi
 
     ffmpeg -re -stream_loop -1 $seek_args -i "$video_path" \
-        -c copy -f rtsp \
+        -an -c copy -f rtsp \
         "rtsp://localhost:$RTSP_PORT/$rtsp_path" \
         </dev/null &>/dev/null &
     PIDS_TO_KILL+=($!)
@@ -348,7 +344,7 @@ if $RUN_INTEGRATION && ! $RUN_MULTIVIDEO; then
     cd "$PROJECT_DIR"
 
     # Check prerequisites
-    require_video VSA_TEST_CHILD_VIDEO "$VIDEO_CHILD" || exit 1
+    ensure_sample_video || exit 1
 
     if $USE_LOCAL; then
         info "Mode: LOCAL (no Docker)"
@@ -364,7 +360,7 @@ if $RUN_INTEGRATION && ! $RUN_MULTIVIDEO; then
 
     # Start infrastructure
     ensure_mediamtx
-    push_rtsp "$VIDEO_CHILD" "live/child" 40
+    push_rtsp "$VIDEO_SAMPLE" "live/sample" 0
     start_mock_webhook
 
     if $USE_LOCAL; then
@@ -394,13 +390,10 @@ fi
 # MULTI-VIDEO SCENARIO TESTS
 # =============================================================================
 if $RUN_MULTIVIDEO; then
-    header "MULTI-VIDEO SCENARIO TESTS"
+    header "SCENARIO TESTS (sample video)"
     cd "$PROJECT_DIR"
 
-    require_video VSA_TEST_CHILD_VIDEO "$VIDEO_CHILD" || exit 1
-    require_video VSA_TEST_FRIDGE_VIDEO "$VIDEO_FRIDGE" || exit 1
-    require_video VSA_TEST_ELDER_VIDEO "$VIDEO_ELDER_DAY1" || exit 1
-    require_video VSA_TEST_ELDER_2_VIDEO "$VIDEO_ELDER_DAY2" || exit 1
+    ensure_sample_video || exit 1
 
     # Start infrastructure
     ensure_mediamtx
@@ -428,50 +421,26 @@ if $RUN_MULTIVIDEO; then
     fi
     RESULTS=()
 
-    # --- Scenario 1: Child Safety ---
+    # --- Scenario 1: person prefilter on ---
     echo ""
-    info "━━━ Scenario 1/4: Child Safety (cam_child) ━━━"
-    push_rtsp "$VIDEO_CHILD" "live/child" 40
-    if test_video_scenario "cam_child" "live/child" "child_safety" "true" 60; then
-        RESULTS+=("child_safety:PASS")
+    info "━━━ Scenario 1/2: Prefilter on (cam_sample) ━━━"
+    push_rtsp "$VIDEO_SAMPLE" "live/sample" 0
+    if test_video_scenario "cam_sample" "live/sample" "sample" "true" 60; then
+        RESULTS+=("prefilter_on:PASS")
     else
-        RESULTS+=("child_safety:FAIL")
+        RESULTS+=("prefilter_on:FAIL")
     fi
-    pkill -f "ffmpeg.*live/child" 2>/dev/null || true
+    pkill -f "ffmpeg.*live/sample" 2>/dev/null || true
     sleep 2
 
-    # --- Scenario 2: Refrigerator ---
+    # --- Scenario 2: prefilter off (motion only) ---
     echo ""
-    info "━━━ Scenario 2/4: Refrigerator (cam_fridge) ━━━"
-    push_rtsp "$VIDEO_FRIDGE" "live/fridge" 0
-    if test_video_scenario "cam_fridge" "live/fridge" "fridge" "false" 60; then
-        RESULTS+=("fridge:PASS")
+    info "━━━ Scenario 2/2: Prefilter off (cam_sample_nopf) ━━━"
+    push_rtsp "$VIDEO_SAMPLE" "live/sample_nopf" 0
+    if test_video_scenario "cam_sample_nopf" "live/sample_nopf" "sample" "false" 60; then
+        RESULTS+=("prefilter_off:PASS")
     else
-        RESULTS+=("fridge:FAIL")
-    fi
-    pkill -f "ffmpeg.*live/fridge" 2>/dev/null || true
-    sleep 2
-
-    # --- Scenario 3: Elder Wakeup Day1 ---
-    echo ""
-    info "━━━ Scenario 3/4: Elder Wakeup Day1 (cam_elder_bedroom) ━━━"
-    push_rtsp "$VIDEO_ELDER_DAY1" "live/elder" 0
-    if test_video_scenario "cam_elder_bedroom" "live/elder" "elder_wakeup" "true" 90; then
-        RESULTS+=("elder_day1:PASS")
-    else
-        RESULTS+=("elder_day1:FAIL")
-    fi
-    pkill -f "ffmpeg.*live/elder" 2>/dev/null || true
-    sleep 2
-
-    # --- Scenario 4: Elder Wakeup Day2 ---
-    echo ""
-    info "━━━ Scenario 4/4: Elder Wakeup Day2 (cam_elder_bedroom_2) ━━━"
-    push_rtsp "$VIDEO_ELDER_DAY2" "live/elder2" 0
-    if test_video_scenario "cam_elder_bedroom_2" "live/elder2" "elder_wakeup" "true" 90; then
-        RESULTS+=("elder_day2:PASS")
-    else
-        RESULTS+=("elder_day2:FAIL")
+        RESULTS+=("prefilter_off:FAIL")
     fi
 
     # --- Summary ---

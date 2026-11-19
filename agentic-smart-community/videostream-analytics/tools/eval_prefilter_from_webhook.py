@@ -63,16 +63,16 @@ anchor: when did wall-clock T0 correspond to video second V0?
 Usage
 -----
   # Recommended: stream-start anchor (service must still be up).
-  # --ss matches the ffmpeg `-ss N` seek used to push the demo video.
+  # --ss matches the ffmpeg `-ss N` seek used to push the video.
   python tools/eval_prefilter_from_webhook.py \\
-      --srt ../demo/videos/cam_child/child_safety_demo_groundtruth.srt \\
-      --source-id cam_child --anchor-mode stream-start --ss 40
+      --srt tools/groundtruth/people-detection.srt \\
+      --source-id cam_eval --anchor-mode stream-start --ss 0
 
   # Offline: against an exported events dump. Anchor drifts; only OK if
   # GT cue 1 starts at the very beginning of the video.
   curl -s http://localhost:9999/recorded_events > events.json
   python tools/eval_prefilter_from_webhook.py --srt <gt.srt> \\
-      --events-json events.json --source-id cam_child --ss 40
+      --events-json events.json --source-id cam_eval --ss 0
 
   # Loosen overlap matching by ±2s on each side:
   python tools/eval_prefilter_from_webhook.py --srt <gt.srt> --tolerance 2.0
@@ -430,7 +430,7 @@ def main():
         "--exclude-label-pattern",
         help=(
             "Regex (case-insensitive). GT cues whose label matches are dropped "
-            "before evaluation. Useful for `[EMPTY]` cues in elder_wakeup where "
+            "before evaluation. Useful for `[EMPTY]` cues (expected to be skipped by the prefilter) where "
             "the room is empty and prefilter is *expected* to skip."
         ),
     )

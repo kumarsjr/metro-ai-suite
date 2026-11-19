@@ -95,36 +95,19 @@ events_webhook:
 # elder_wakeup adapter ships at demo/prompts/elder_wakeup_evaluate_rules.py;
 # use cases registered at runtime are staged to <data_dir>/use-cases/<name>/evaluate_rules.py.
 use_case_dict:
-  fridge:
-    description: "Fridge content tracking"
-    video_summary_task: fridge_monitor
-    # report-only: fridge_monitor emits no SEVERITY/EVENT lines, so no extension
-    # columns are parsed. Empty schema → nothing checked, nothing extracted.
-    schema:
-      video_summary_tasks: { extensions: [] }
-      custom_tables: []
-    summarize:
-      method: SIMPLE
-      processor_kwargs:
-        levels: 1
-        level_sizes: [ -1 ]
-        process_fps: 2
-    reports:
-      data_source: events
-      default_type: daily
-      filter: { motion_type: motion }
-
-  child_safety:
-    description: "Child safety monitoring"
-    video_summary_task: child_safety_monitor
+  venue_monitor:
+    description: "Venue activity monitoring"
+    # Registered by examples/venue-monitor/register-use-case.sh from examples/venue-monitor/prompts/venue_monitor.<lang>.txt.
+    video_summary_task: venue_monitor
     # No evaluate_rules_path — defaultRuleEvaluator alerts on severity warn/critical.
     # This use case parses severity/event/desc; severity drives the threshold rule.
     schema:
       video_summary_tasks:
         extensions:
-          - { name: "severity", type: "text", required: false } # critical / warn / info
+          - { name: "severity", type: "text", required: false } # warn / info
           - { name: "event", type: "text", required: true }
           - { name: "desc", type: "text", required: true }
+          - { name: "people_count", type: "integer", required: false } # distinct people in the clip
       custom_tables: []
     # Per-clip summarize tuning. Defaults (single LOCAL_PROMPT pass) suit most use cases;
     # override only when you need multi-level roll-up or T-1 temporal context.
@@ -135,30 +118,6 @@ use_case_dict:
         level_sizes: [ -1 ] # -1 = single group at the level
         process_fps: 2 # frames per second sampled from the clip
     reports:
-      data_source: alerts
+      data_source: video_summary_tasks # every analyzed clip, so reports can include foot traffic
       default_type: daily
       filter: {}
-
-  elder_wakeup:
-    description: "Elder wakeup monitoring"
-    video_summary_task: elder_wakeup_monitor
-    evaluate_rules_path: ./demo/prompts/elder_wakeup_evaluate_rules.py
-    # Time-based UC: evaluate_rules.py judges by event + wakeup_time (no severity).
-    schema:
-      video_summary_tasks:
-        extensions:
-          - { name: "event", type: "text", required: true }
-          - { name: "wakeup_time", type: "text", required: false } # HH:MM or minutes-since-midnight
-          - { name: "desc", type: "text", required: true }
-      custom_tables: []
-    summarize:
-      method: SIMPLE
-      processor_kwargs:
-        levels: 1
-        level_sizes: [ -1 ]
-        process_fps: 2
-    reports:
-      data_source: video_summary_tasks
-      default_type: weekly
-      filter:
-        event: wakeup # filter on video_summary_tasks.event extension column

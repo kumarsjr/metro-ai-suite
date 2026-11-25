@@ -24,7 +24,7 @@ Deploy these on separate devices:
 - **VSS Search**: Handles video search functionality
 - **VSS Summary**: Provides video summarization capabilities
 
-[VSS Documentation](https://docs.openedgeplatform.intel.com/2026.3/edge-ai-libraries/video-search-and-summarization/get-started.html)
+[VSS Documentation](https://docs.openedgeplatform.intel.com/dev/edge-ai-libraries/video-search-and-summarization/get-started.html)
 
 
 ## Helm Chart Installation
@@ -44,7 +44,7 @@ There are two options to get the charts in your workspace:
 Use the following command to pull the Helm chart from Docker Hub:
 
 ```bash
-helm pull oci://registry-1.docker.io/intel/smart-nvr --version 2026.3.0-rc1
+helm pull oci://registry-1.docker.io/intel/smart-nvr --version 2026.3.0-rc2
 ```
 
 Refer to the [release notes](../release-notes.md) for details on the latest version number to
@@ -55,7 +55,7 @@ use for the sample application.
 After pulling the chart, extract the `.tgz` file:
 
 ```bash
-tar -xvf smart-nvr-2026.3.0-rc1.tgz
+tar -xvf smart-nvr-2026.3.0-rc2.tgz
 ```
 
 This will create a directory named `smart-nvr` containing the chart files. Navigate to the
